@@ -2,6 +2,7 @@ package org.oversky.code.util;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -9,36 +10,58 @@ import java.util.regex.Pattern;
 
 public class PropertiesUtil {
 
-	public static HashMap<String, String> config = new HashMap<String, String>();
+	private HashMap<String, String> config = new HashMap<String, String>();
+	private HashMap<String, String> varMap = new HashMap<String, String>();
 	private static final Pattern PATTERN = Pattern.compile("\\$\\{([^\\}]+)\\}");
-	private static ResourceBundle rb = ResourceBundle.getBundle("config");
 	
-	public static void convert(ResourceBundle properties) {
-		HashMap<String, String> tmpConfig = new HashMap<String, String>();
-		
-		Set<String> keys = properties.keySet();
+	public PropertiesUtil (ResourceBundle rb) {
+		Set<String> keys = rb.keySet();
 		for(Iterator<String> i = keys.iterator(); i.hasNext();) {
 			String key = i.next();
-			String value = properties.getString(key);
+			String value = rb.getString(key);
 			Matcher matcher = PATTERN.matcher(value);
 			if(matcher.find()) {
-				tmpConfig.put(key, value);
+				varMap.put(key, value);
 			}else {
 				config.put(key, value);
 			}
 		}
 		
-		if(tmpConfig.size() > 0) {
-			for(Iterator<String> i = tmpConfig.keySet().iterator(); i.hasNext();) {
+		convert();
+	}
+	
+	public PropertiesUtil (Properties properties) {
+		Set<Object> keys = properties.keySet();
+		for(Iterator<Object> i = keys.iterator(); i.hasNext();) {
+			String key = (String)i.next();
+			String value = properties.getProperty(key);
+			Matcher matcher = PATTERN.matcher(value);
+			if(matcher.find()) {
+				varMap.put(key, value);
+			}else {
+				config.put(key, value);
+			}
+		}
+		
+		convert();
+	}
+	
+	public String getValue(String key) {
+		return this.config.get(key);
+	}
+	
+	private void convert() {
+		if(varMap.size() > 0) {
+			for(Iterator<String> i = varMap.keySet().iterator(); i.hasNext();) {
 				String key = i.next();
-				String value = loop(tmpConfig.get(key));
+				String value = loop(varMap.get(key));
 				config.put(key, value);
 			}
 		}
 	}
 	
-	private static String loop(String key){
-        //定义matcher匹配其中的路径变量
+	private String loop(String key){
+        //定义matcher匹配其中的变量
         Matcher matcher = PATTERN.matcher(key);
         StringBuffer buffer = new StringBuffer();
         boolean flag = false;
@@ -54,9 +77,4 @@ public class PropertiesUtil {
         //flag为false时说明已经匹配不到变量，则不需要再递归查找
         return flag?loop(buffer.toString()):key;
     }
-	
-	public static void main(String[] args) {
-		convert(rb);
-		System.out.println(config.get("test2"));
-	}
 }

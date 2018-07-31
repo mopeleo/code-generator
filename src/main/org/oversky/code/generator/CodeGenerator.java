@@ -10,13 +10,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 import org.oversky.code.model.Model;
 import org.oversky.code.model.Table;
 import org.oversky.code.parser.CDMParser;
 import org.oversky.code.parser.PDMParser;
+import org.oversky.code.util.PropertiesUtil;
 
 import freemarker.template.Configuration;
 import freemarker.template.Template;
@@ -24,27 +24,23 @@ import freemarker.template.TemplateException;
 
 public class CodeGenerator {
 
-    public static final String TEMPLATE_DIR = "template";
-
-    private ResourceBundle rb = null;
+    protected PropertiesUtil util = null;
     
     protected String getClassPath(){
         return CodeGenerator.class.getClassLoader().getResource("").getPath();
     }
     
     protected String getConfig(String key) {
-        if(rb == null){
-            rb = ResourceBundle.getBundle("config");
+        if(util == null){
+        	util = new PropertiesUtil(ResourceBundle.getBundle("config"));
         }
-        String val = "";
-        try{
-            val = rb.getString(key);
-        }catch(MissingResourceException e){
-            val = "";
-        }
-        return val;
+        return util.getValue(key);
     }
     
+    public String getTemplateDir(){
+        return getConfig("template_dir").trim();
+    }
+
     public String getModelFile(){
         return getConfig("model_file").trim();
     }
@@ -53,7 +49,7 @@ public class CodeGenerator {
         return getConfig("generate_type").trim();
     }
 
-    public void addGlobalParam(Map paramMap){
+    public void addGlobalParam(Map<String, String> paramMap){
         if(paramMap == null){
             return;
         }
@@ -61,16 +57,12 @@ public class CodeGenerator {
         if(constant == null || "".equals(constant)){
             return;
         }
-        //默认分隔符 param1|val1,param2|val2
+        //默认分隔符 param1:val1,param2:val2
         String[] paramArray = constant.split(",");
         for(String param : paramArray){
             String[] vals = param.split(":");
             paramMap.put("param_" + vals[0], vals[1]);
         }
-    }
-    
-    public String getTemplate(String key){
-        return getConfig(key + "_template").trim();
     }
     
     public String getPackage(String key){
@@ -111,12 +103,13 @@ public class CodeGenerator {
     public void generate(String tmpFile, Map params, String outFile){
         String fullPath = null;
         String classPath = this.getClassPath();
-        if(classPath.endsWith(File.separator) && TEMPLATE_DIR.startsWith(File.separator)){
-            fullPath = classPath + TEMPLATE_DIR.substring(1);
-        }else if(!classPath.endsWith(File.separator) && !TEMPLATE_DIR.startsWith(File.separator)){
-            fullPath = classPath + File.separator + TEMPLATE_DIR;
+        String templateConfig = getTemplateDir();
+        if(classPath.endsWith(File.separator) && templateConfig.startsWith(File.separator)){
+            fullPath = classPath + templateConfig.substring(1);
+        }else if(!classPath.endsWith(File.separator) && !templateConfig.startsWith(File.separator)){
+            fullPath = classPath + File.separator + templateConfig;
         }else{
-            fullPath = classPath + TEMPLATE_DIR;
+            fullPath = classPath + templateConfig;
         }
         File templateDir = new File(fullPath);
         Writer out = null;
@@ -166,10 +159,7 @@ public class CodeGenerator {
             params.put("table", table);            
             String[] types = getGenerateType().split(",");
             for(String type : types){
-                String template = getTemplate(type);
-                if("".equals(template)){
-                   continue; 
-                }
+                String template = type + ".ftl";
                 String pkg = getPackage(type);
                 if(table.getGroup() != null && !table.getGroup().equals("")){
                     pkg = pkg + "." + table.getGroup();
