@@ -15,7 +15,7 @@ public class ExecJarGenerator extends CodeGenerator{
         if(util == null){
         	Properties prop = new Properties();
             try {
-//                System.out.println(System.getProperty("user.dir") + File.separator + "config.properties");
+                System.out.println(System.getProperty("user.dir") + File.separator + "config.properties");
                 InputStream in = new FileInputStream(new File(System.getProperty("user.dir") + File.separator + "config.properties"));
                 prop.load(in);
                 util = new PropertiesUtil(prop);
