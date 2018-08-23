@@ -142,6 +142,7 @@ public class PDMParser {
 	                    colCode = colOrigincode;
 	                }
 	                column.setCode(colCode);
+	                System.out.println("column : id = " + column.getId() + ", name = " + column.getName() + ", code = " + column.getCode());
 
 					elementCommont = elementColumn.element(ELEMENT_COMMENT);
 					if(elementCommont == null){

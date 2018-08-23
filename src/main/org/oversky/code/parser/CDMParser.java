@@ -76,6 +76,7 @@ public class CDMParser {
                     code = origincode;
                 }
                 column.setCode(code);
+                System.out.println("column : id = " + column.getId() + ", name = " + column.getName() + ", code = " + column.getCode());
 
                 Element elementCommont = colItem.element(ELEMENT_COMMENT);
                 if(elementCommont == null){
